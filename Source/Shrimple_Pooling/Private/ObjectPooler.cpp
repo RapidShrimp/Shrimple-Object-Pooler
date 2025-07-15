@@ -154,6 +154,24 @@ AActor* UObjectPooler::GetObjectFromPool(TSubclassOf<AActor> ObjectType, bool& S
 	return nullptr;
 }
 
+TArray<AActor*> UObjectPooler::GetObjectsFromPool(TSubclassOf<AActor> ObjectType, int Count, bool& Success)
+{
+	TArray<AActor*> OutArray;
+	if(!PooledObjects.Find(ObjectType))
+	{
+		UE_LOG(LogObjectPooler,Error,TEXT("Cannot activate '%s' is not a pooler initialised type\nCall SpawnPooledClass() with the class type to initialise"),*ObjectType->GetName());
+
+		return OutArray; 
+	}
+	
+	for(int i = 0; i < Count; i++)
+	{
+		OutArray.Add(GetObjectFromPool(ObjectType,Success));
+	}
+
+	return OutArray;
+}
+
 bool UObjectPooler::ReturnObjectToPool(AActor* Object)
 {
 	if(!Object)
@@ -179,6 +197,27 @@ bool UObjectPooler::ReturnObjectToPool(AActor* Object)
 	SwapObjectToPool(Pool->Key,Pool->Value,Object);
 	DeactivateObject(Object);
 	return true;
+}
+
+void UObjectPooler::ReturnObjectsToPool(TArray<AActor*> Objects)
+{
+	for (AActor* Object : Objects)
+	{
+		if(!IsValid(Object))
+		{
+			UE_LOG(LogObjectPooler,Warning,TEXT("Nullptr found in parsed object array"));
+			continue;
+		}
+
+		if(!PooledObjects.Find(Object->GetClass()))
+		{
+			UE_LOG(LogObjectPooler,Warning,TEXT("%s is not of an initialised pool type"),*Object->GetClass()->GetName());
+			continue;
+		}
+
+		ReturnObjectToPool(Object);
+	}
+	
 }
 
 bool UObjectPooler::ActivateObject(AActor* Actor)
@@ -239,6 +278,7 @@ void UObjectPooler::SwapObjectToPool(TArray<AActor*>& FromPool, TArray<AActor*>&
 	ToPool.Add(MoveObject);
 }
 
+
 bool UObjectPooler::ClearPoolOfType(TSubclassOf<AActor> ObjectType, bool ForceRemove)
 {
 	TTuple<TArray<AActor*>,TArray<AActor*>>* Pool = PooledObjects.Find(ObjectType);
@@ -282,6 +322,8 @@ void UObjectPooler::SetCleanupTimer(bool InTimerActive)
 		GetWorld()->GetTimerManager().ClearTimer(CleanupTimerHandle);
 	}
 }
+
+
 
 void UObjectPooler::CheckForCleanup()
 {
@@ -356,3 +398,24 @@ void UObjectPooler::CompactArray(TArray<AActor*>& Pool)
 		}
 	}
 }
+
+void UObjectPooler::DebugPooler()
+{
+	for (TTuple<TSubclassOf<AActor>, TTuple<TArray<AActor*>, TArray<AActor*>>> Pool : PooledObjects) 
+	{
+		if(!Pool.Key){continue;}
+		UE_LOG(LogObjectPooler,Display,TEXT(""));
+		UE_LOG(LogObjectPooler,Display,TEXT("Pool: %s | Active: %d | Inactive: %d"),*Pool.Key->GetName(),Pool.Value.Key.Num(),Pool.Value.Value.Num());
+		
+		FPoolerOptions* Setting = SettingsMap.Find(Pool.Key);
+		if(!Setting)
+		{
+			UE_LOG(LogObjectPooler,Warning,TEXT("No Pooler Settings!"));
+			continue;
+		}
+		
+		UE_LOG(LogObjectPooler,Display,TEXT("PoolSettings: %s | Can Expand |"),*Pool.Key->GetName());
+
+	}
+}
+
