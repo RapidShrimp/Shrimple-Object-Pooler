@@ -7,13 +7,13 @@ This is a simple object pooler plugin for Unreal Engine.
 
 # Table of Contents
 - [Supported Versions](#known-supported-versions)
-- [What is Object Pooling?](#about-object-pooling)
 - [Installation](#installation)
+- [What is Object Pooling?](#about-object-pooling)
+- [Shrimple Pooler Advantages ](#shrimple-object-poolers-advantages)
 - [How to Use](#how-to-use-the-shrimple-object-pooler)
   - [Creating a Pool](#creating-an-object-pooler)
   - [Getting and Returning Objects](#getting-and-returning-objects)
   - [Settings](#pooling-settings)
-- [Under the Hood](#under-the-hood)
 - [Testing](#testing)
   - [Results](#results)
 
@@ -21,20 +21,43 @@ This is a simple object pooler plugin for Unreal Engine.
 - 5.4.1
 - 5.3.1
 
-# About Object Pooling
-### What is it?
-An object pooler is a design pattern which minimises runtime allocation and deallocation of frequently used objects.<br>
-This method pre spawns a number of objects at the start of the poolers lifetime and stores them in a list to be activated at a later time.
-When the desired object is needed, the pooler will return an object (if it has one free), 
-
-A large downside of object pooling is that the memory increases with the number of objects stored, deactivated pooled object still retain space in memory thus slowing down peformance on larger scales.
-
 ## Installation
 1. Clone or download this repository.
 2. Copy the `ShrimpleObjectPooler` folder into your project's `Plugins/` directory.
 3. Open your Unreal project.
 4. Enable the **ShrimpleObjectPooler** plugin via **Edit > Plugins**.
 5. Recompile and restart the editor.
+
+# About Object Pooling
+### What is it?
+An object pooler is a design pattern which minimises runtime allocation and deallocation of frequently used objects.<br>
+This method pre-spawns a number of objects at the start of the poolers lifetime and stores them in a list to be activated at a later time.
+When the desired object is needed, the pooler will return an object (if it has one free). 
+
+Please keep in mind that object pooling a large number of objects (1000+) will have a noticeable effect on memory, causing memory performance to slow.
+
+## Shrimple Object Pooler's Advantages
+
+- **Pre-Allocation with Array Reservation:**  
+  Arrays reserve space upfront, based on configured pool sizes, to prevent costly reallocations during initialization.
+
+- **Efficient Pool Management:**  
+   Objects are stored in two arrays per pooled class — an *active* array and an *inactive* array. Instead of costly `RemoveAt()` calls causing array reshuffling, returned objects are set to `nullptr` in the active array and placed into available slots in the inactive array. This approach minimizes memory reallocations and fragmentation, maintaining stable performance even with large pools.
+
+- **Interface Enforcement:**  
+  Only actors implementing the `IPooledObject` interface can be pooled, ensuring pooled objects support activation and deactivation hooks. This guarantees that actors correctly reset their state when reused.
+
+- **Expandable Pools and Fallbacks:**  
+  The pool supports dynamic expansion if configured, allowing new objects to spawn when the pool runs out. Additionally, it can be set to reuse the oldest active object, providing flexible object reuse strategies that fit different gameplay needs.
+
+- **Configurable Per-Class Cleanup:**  
+  A cleanup timer periodically compacts pooled arrays by removing invalid or destroyed actor references. This cleanup respects user-configured thresholds and frequencies on a per-class basis, optimizing runtime memory use without causing frame spikes.
+
+- **Blueprint and Editor Friendly:**  
+  Spawned pooled actors are organized under a dedicated editor folder (`/Pool`) to keep the world outliner tidy. Spawn parameters avoid deferred construction to ensure predictable initialization.
+
+Together, these design decisions enable a highly performant, scalable and easy-to-use object pooling system that fits seamlessly into Unreal Engine workflows.
+
 
 # How to use the Shrimple Object Pooler 
 ## Creating an Object Pooler
@@ -74,30 +97,6 @@ The pooler has a few settings that can affect how the pooler operates.
 | Destroy On Pool Removal | `bool` | false | Destroy all pooled actors when the pool is cleared |
 | Cleanup Threshold | `int` | 10 | How many `nullptr` references trigger cleanup |
 | Cleanup Time | `float` | 10.0 | How often (seconds) the pooler checks for cleanup |
-
-## Under the Hood
-
-- **Pre-Allocation with Array Reservation:**  
-  Arrays reserve space upfront based on configured pool sizes to prevent costly reallocations during initialization.
-
-- **Efficient Pool Management:**  
-   Objects are stored in two arrays per pooled class — an *active* array and an *inactive* array. Instead of costly `RemoveAt()` calls that cause array reshuffling, returned objects are set to `nullptr` in the active array and placed into available slots in the inactive array. This approach minimizes memory reallocations and fragmentation, maintaining stable performance even with large pools.
-
-- **Interface Enforcement:**  
-  Only actors implementing the `IPooledObject` interface can be pooled, ensuring pooled objects support activation and deactivation hooks. This guarantees that actors correctly reset their state when reused.
-
-- **Expandable Pools and Fallbacks:**  
-  The pool supports dynamic expansion if configured, allowing new objects to spawn when the pool runs out. Additionally, it can be set to reuse the oldest active object, providing flexible object reuse strategies that fit different gameplay needs.
-
-- **Configurable Per-Class Cleanup:**  
-  A cleanup timer periodically compacts pooled arrays by removing invalid or destroyed actor references. This cleanup respects user-configured thresholds and frequencies on a per-class basis, optimizing runtime memory use without causing frame spikes.
-
-- **Blueprint and Editor Friendly:**  
-  Spawned pooled actors are organized under a dedicated editor folder (`/Pool`) to keep the world outliner tidy. Spawn parameters avoid deferred construction to ensure predictable initialization.
-
-These design decisions together enable a highly performant, scalable, and easy-to-use object pooling system that fits seamlessly into Unreal Engine workflows.
-
-
 
 # Testing
 
