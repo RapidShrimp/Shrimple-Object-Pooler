@@ -267,7 +267,7 @@ void UObjectPooler::SwapObjectToPool(TArray<AActor*>& FromPool, TArray<AActor*>&
 	//Add ref to target array reusing null slot if any
 	for (int32 i = 0; i < ToPool.Num(); i++)
 	{
-		if (ToPool[i] == nullptr || !IsValid(ToPool[i]))
+		if (!IsValid(ToPool[i]))
 		{
 			ToPool[i] = MoveObject;
 			return;
@@ -377,7 +377,7 @@ void UObjectPooler::CleanupCheck(TArray<AActor*>& Pool, int Threshold)
 
 	for (AActor* Object : Pool)
 	{
-		if (Object != nullptr || IsValid(Object)) {continue;}
+		if (IsValid(Object)) {continue;}
 
 		NullCount++;
 		if (NullCount < Threshold) { continue; }
@@ -392,7 +392,7 @@ void UObjectPooler::CompactArray(TArray<AActor*>& Pool)
 	// Manually remove null or invalid pointers from Pool
 	for (int32 i = Pool.Num() - 1; i >= 0; --i)
 	{
-		if (Pool[i] == nullptr || !IsValid(Pool[i]))
+		if (!IsValid(Pool[i]))
 		{
 			Pool.RemoveAt(i);
 		}

@@ -13,30 +13,30 @@ struct FPoolerOptions
 public:
 	/*The number of actors to spawn on initialisation*/
 	UPROPERTY(EditAnywhere,BlueprintReadWrite,Category = "Spawning")
-	int PreSpawnCount = 0;
+	const int PreSpawnCount = 0;
 
 	/*If this is set true, more objects spawn into the pool when none are available*/
 	UPROPERTY(EditAnywhere,BlueprintReadWrite,Category = "Spawning")
-	bool bExpandable = false;
+	const bool bExpandable = false;
 
 	/*
 	 *Recycles the oldest active pooled object when the pool is not expandable
 	 *If set to false, no object will be returned
 	 */
 	UPROPERTY(EditAnywhere,BlueprintReadWrite,Category = "Spawning")
-	bool bFindOldest = false;
+	const bool bFindOldest = false;
 
 	/*If set true, when the object type is removed from the pool, destroy all referenced actors */
 	UPROPERTY(EditAnywhere,BlueprintReadWrite,Category = "Spawning")
-	bool bDestroyOnPoolRemoval = false;
+	const bool bDestroyOnPoolRemoval = false;
 	
 	/*Number of null spaces in a pool before cleanup is required*/
 	UPROPERTY(EditAnywhere,BlueprintReadWrite,Category = "Cleanup")
-	int CleanupThreshold = 5;
+	const int CleanupThreshold = 5;
 
 	/*The time between auto cleanup checks on the pool*/
 	UPROPERTY(EditAnywhere,BlueprintReadWrite,Category="Cleanup")
-	float CleanupTime = 10.0f;
+	const float CleanupTime = 10.0f;
 	
 	/*Internal Property used for cleanup operations*/
 	float LastCleanupTime = 0.0f;
